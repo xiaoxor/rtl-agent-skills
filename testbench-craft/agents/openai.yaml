@@ -1,0 +1,5 @@
+interface:
+  display_name: "Testbench Craft"
+  short_description: "Race-free Verilog/SystemVerilog verification"
+policy:
+  allow_implicit_invocation: false
