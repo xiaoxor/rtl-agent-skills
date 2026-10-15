@@ -11,6 +11,7 @@ module tb_clocking;
     endclocking
     initial begin
         @(cb);
+        $display("OBSERVE clocking initial cb.sampled=%h sampled=%h", cb.sampled, sampled);
         if (cb.sampled !== 0) $fatal(1, "CLOCKING_INITIAL");
         cb.data <= 8'h35;
         #1;

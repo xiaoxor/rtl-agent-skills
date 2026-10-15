@@ -70,6 +70,7 @@ data  = payload;
 - Do not use `#0` as a way to wait for NBA: `#0` moves to the Inactive region, which is still before NBA.
 - A carefully chosen small positive sampling delay may be used in a conventional non-clocking-block TB, but must be compatible with `timeunit/timeprecision`, must not cross a later event, and must be explained; it is **not** a universal fix. Prefer a clocking block or clear next-edge sampling where feasible.
 - A `clocking block` with default `input #1step` observes values from before the event, **not** the newly registered values written by NBA at that event. Choose an appropriate observation strategy for the actual interface contract.
+- In the checked Vivado Simulator (XSIM) 2025.2 clocking-block probe, `input #1step` read `xx` at the first rising edge although the source register was initialized to `0`. Check this skew in the selected simulator before relying on it; the falling-edge drive/sample pattern passed in that version.
 - Keep independent stimulus/expected values in TB variables or queues. Never use a changing DUT input as the expected value when a delayed output arrives.
 
 ### C. Reset, initialization, and X handling
@@ -91,6 +92,7 @@ data  = payload;
 
 - Every wait for a response, busy clear, ready/ack, or valid output must be bounded: either a **local cycle limit** or an explicit global watchdog. Prefer both for complex designs.
 - Use `$fatal(1, ...)` on mismatch, timeout, protocol violation, or incomplete tests; do not print PASS after an error. Do not rely on `$error` followed by `$finish` to establish a failing process exit across tools.
+- In batch XSIM 2025.2, `$fatal(1, ...)` printed `Fatal:` and ended simulation but returned process exit code 0, even with `--onerror quit`. For XSIM automation, also check the log for a specific failure marker and require a PASS marker only on successful cases; never use the process exit code alone to judge the test.
 - Never use unbounded `wait(...)`, `forever` polling, or `fork...join_any` without a clearly terminating watchdog and cleanup.
 - Before reporting PASS, ensure at least one intended transaction was checked, all issued transactions were accounted for, expected queues are empty, and no monitors/scoreboards report outstanding failures.
 - Put diagnostic context in failures: clock/cycle, transaction index, input, expected, actual, and handshake state when relevant.

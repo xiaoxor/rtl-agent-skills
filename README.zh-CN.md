@@ -12,7 +12,7 @@
 
 两个面向 RTL 精简的 Skill 不强制 FSM 编码风格，也不会把“RTL 代码行数更少”当作综合结果更好的证据。规格要求的复位行为、跨时钟域安全、接口协议、时序和吞吐率要求始终优先。
 
-可运行的 Icarus Verilog / Verilator 示例及实测结果见 [testbench-craft 仿真检查](tests/testbench-craft/README.md)。
+可运行的 Icarus Verilog / Verilator / XSIM 示例及实测结果见 [testbench-craft 仿真检查](tests/testbench-craft/README.md)。
 
 ## 安装
 
