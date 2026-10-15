@@ -12,6 +12,8 @@ Three focused, manually invoked skills for RTL implementation, review, and testb
 
 The two RTL-focused skills do not impose an FSM coding style or equate fewer lines of RTL with better synthesized hardware. Required reset behavior, clock-domain crossing safety, interface protocols, timing, and throughput take precedence over simplification.
 
+For executable Icarus Verilog / Verilator examples and measured results, see [testbench-craft simulation checks](tests/testbench-craft/README.md).
+
 ## Install
 
 Using the [Skills CLI](https://github.com/vercel-labs/skills):
