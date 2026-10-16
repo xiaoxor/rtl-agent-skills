@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
-$skill = Join-Path $repo 'testbench-craft\SKILL.md'
+$templateSource = Join-Path $repo 'testbench-craft\templates\portable-valid-result.sv'
 $buildRoot = Join-Path $PSScriptRoot '.build\xsim'
 $tools = @{}
 foreach ($name in 'xvlog', 'xelab', 'xsim') {
@@ -12,17 +12,9 @@ $versionLog = Join-Path $buildRoot 'version.log'
 if ($LASTEXITCODE -ne 0) { throw "xsim --version failed; see $versionLog" }
 Get-Content $versionLog
 
-$template = $null
-$blocks = [regex]::Matches((Get-Content -LiteralPath $skill -Raw), '(?s)```systemverilog\r?\n(.*?)\r?\n```')
-foreach ($block in $blocks) {
-    if ($block.Groups[1].Value -match '(?m)^module tb_dut;') {
-        $template = $block.Groups[1].Value
-        break
-    }
+if (-not (Test-Path -LiteralPath $templateSource -PathType Leaf)) {
+    throw "Could not find testbench template: $templateSource"
 }
-if (-not $template) { throw "Could not extract tb_dut template from $skill" }
-$templateSource = Join-Path $buildRoot 'template.sv'
-[System.IO.File]::WriteAllText($templateSource, $template, [System.Text.Encoding]::ASCII)
 
 $cases = @(
     @{ Name='scheduling'; Top='tb_scheduling'; Files=@('tb_scheduling.sv'); Expect='pass'; Marker='PASS scheduling' },

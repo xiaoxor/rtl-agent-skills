@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-// Identity pipeline matching the skill template's N -> N+1 contract.
+// Identity pipeline matching portable-valid-result.sv's N -> N+1 contract.
 module dut (
     input wire clk, rst_n, in_valid,
     input wire [7:0] in_data,

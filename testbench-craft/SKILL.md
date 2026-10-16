@@ -15,6 +15,7 @@ user-invocable: true
 
 - **Manual invocation only.** Apply this skill only when the user explicitly invokes `testbench-craft` (e.g. `/testbench-craft` or `$testbench-craft`, depending on the agent). Never auto-select it based on RTL files, verification topics, or installation alone.
 - Build or review a testbench, not a synthesizable DUT, unless the user explicitly requests a DUT fix. Do not silently change DUT behavior to make a test pass.
+- For review-only requests, inspect and report findings without editing files. Modify a testbench only when the user asks for changes.
 - Prefer **small task-based, self-checking** Verilog/SystemVerilog testbenches. Add driver, monitor, scoreboard, transaction queues, interfaces, assertions, classes, or coverage only when complexity justifies them. Do not impose UVM.
 - Respect the project's existing language level, reset polarity, clock edges, transaction protocol, simulator, file layout, and coding conventions.
 - Use the simulator required by the user or project. Target multiple simulators only when requested or required by the project; do not silently introduce unsupported features. If plain Verilog is required, avoid SystemVerilog-only constructs.
@@ -28,7 +29,9 @@ Identify the simulator from the user's request or the project's run scripts/conf
 1. Inspect the DUT interface, existing testbench, and project run configuration. Identify the simulator, clocks, reset semantics (async/sync, active level), input sampling edges, output update behavior, valid/ready or request/ack protocol, latency, throughput, and backpressure rules. Read the matching simulator note above. Mark unknown behavior rather than inventing it.
 2. Make a **cycle contract**: when the testbench drives each input, when the DUT samples it, when a transfer counts, and when outputs may be checked. For variable latency, define the response event instead of guessing a fixed delay.
 3. Pick one coherent drive/sample discipline from below. Avoid mixing conventions without an explicit reason.
-4. Produce a self-checking testbench with directed corner cases, meaningful failures, a finite watchdog, and an unambiguous PASS/FAIL exit.
+4. Follow the requested path:
+   - **Review-only:** compare the existing testbench with the cycle contract and checklists. Report each finding with its location, evidence, and recommended correction; state explicitly when there are no findings. Leave files unchanged.
+   - **Create or repair:** produce or edit a self-checking testbench with directed corner cases, meaningful failures, a finite watchdog, and an unambiguous PASS/FAIL result.
 5. If tools are available, compile and run with the actual simulator. Diagnose warnings and failures; never claim PASS without execution. If not run, state exactly what is unverified and provide the command.
 6. Review the race, protocol, reset, and completion checklists before delivering.
 
@@ -103,104 +106,9 @@ data  = payload;
 - Put diagnostic context in failures: clock/cycle, transaction index, input, expected, actual, and handshake state when relevant.
 - Waveform generation should be optional; don't enable massive traces by default.
 
-## Default template: portable, non-overlapping-cycle valid/result DUT
+## Example template
 
-This illustrative **SystemVerilog** skeleton assumes:
-- A rising-edge DUT samples `in_valid` and `in_data` on an edge; no `in_ready` backpressure.
-- An input accepted on edge `N` produces `out_valid`/`out_data` in registers after edge `N+1` (one further registered stage).
-- The TB sends **one transaction at a time**, so checking at the following safe falling edge does not overlap a new output update.
-- `reference()` below is a placeholder; replace with an independently derived reference model and the real DUT ports. Do not copy assumed latency into a real design without verifying it.
-
-```systemverilog
-`timescale 1ns/1ps
-module tb_dut;
-    localparam integer MAX_CYCLES = 1000;
-    reg clk;
-    reg rst_n;
-    reg in_valid;
-    reg [7:0] in_data;
-    wire out_valid;
-    wire [7:0] out_data;
-    integer cycles;
-    integer checked;
-
-    always #5 clk = ~clk;
-
-    // Replace with actual DUT instance and actual port names.
-    dut u_dut (
-        .clk(clk), .rst_n(rst_n),
-        .in_valid(in_valid), .in_data(in_data),
-        .out_valid(out_valid), .out_data(out_data)
-    );
-
-    // Independent golden function. Replace this illustrative identity.
-    function automatic [7:0] reference(input [7:0] x);
-        reference = x;
-    endfunction
-
-    // Global bounded cycle watchdog. Reset independent for simplicity.
-    always @(posedge clk) begin
-        cycles = cycles + 1;
-        if (cycles > MAX_CYCLES)
-            $fatal(1, "GLOBAL TIMEOUT: cycles=%0d checked=%0d", cycles, checked);
-    end
-
-    task automatic run_one(input [7:0] x);
-        reg [7:0] expected;
-        integer waited;
-        begin
-            expected = reference(x);
-            // Drive only on falling edge; stable before next rising edge.
-            @(negedge clk);
-            in_data  = x;
-            in_valid = 1'b1;
-            // Accepted on next rising edge (no ready/backpressure).
-            @(posedge clk);
-            @(negedge clk);
-            in_valid = 1'b0;
-
-            // Check stable registered outputs at falling edges, after NBA.
-            // Since there is no overlapping traffic, a single result
-            // corresponds to this input. For pipelines, use a scoreboard.
-            waited = 0;
-            while (out_valid !== 1'b1) begin
-                if (waited >= 20)
-                    $fatal(1, "LOCAL TIMEOUT: input=%02h", x);
-                @(negedge clk);
-                waited = waited + 1;
-            end
-            if (out_data !== expected)
-                $fatal(1, "MISMATCH: input=%02h expected=%02h actual=%02h",
-                       x, expected, out_data);
-            checked = checked + 1;
-            // Leave an idle cycle before the next single-flight transaction.
-            @(negedge clk);
-        end
-    endtask
-
-    initial begin
-        // Initialize signals before the first sampling edge.
-        clk = 1'b0;
-        rst_n = 1'b0;
-        in_valid = 1'b0;
-        in_data = 8'h00;
-        cycles = 0;
-        checked = 0;
-        repeat (4) @(posedge clk);
-        @(negedge clk);
-        rst_n = 1'b1;
-        run_one(8'h00);
-        run_one(8'h01);
-        run_one(8'hff);
-        if (checked != 3)
-            $fatal(1, "INCOMPLETE: checked=%0d", checked);
-        $display("PASS: %0d transactions checked", checked);
-        $finish;
-    end
-endmodule
-```
-
-**Template caveats:** This skeleton is instructional, not drop-in for arbitrary RTL. Adapt wait conditions, reference logic, reset effects, outstanding transactions, response pulse shape, and latency before running. Its falling-edge observation is valid only if the DUT's output is stable there. The cycle count is a watchdog, not an expected latency guarantee.
+For a single-flight, rising-edge valid/result DUT without input backpressure, see [`templates/portable-valid-result.sv`](templates/portable-valid-result.sv). It assumes a specific registered response latency; adapt its interface, reference model, reset behavior, and checks to the DUT contract before use.
 
 ## Mandatory test coverage (scale to DUT)
 
@@ -228,8 +136,8 @@ endmodule
 ## Delivery format
 
 1. State the inferred timing contract briefly (sampling edges, handshake, output visibility).
-2. Provide or edit the actual testbench and any necessary run command.
-3. Describe the chosen race-avoidance method and output sampling strategy.
+2. For review-only, report findings with location, evidence, and recommended correction, or state that none were found. For create/repair, provide the resulting testbench and run command.
+3. For create/repair, describe the chosen race-avoidance method and output sampling strategy. For review-only, explain the timing basis for any findings.
 4. Report tests run and their real results, or state clearly that execution was unavailable.
 5. Note remaining interface assumptions and unsupported coverage; do not fabricate success.
 

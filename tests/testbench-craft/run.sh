@@ -14,13 +14,9 @@ verilator --version > .build/verilator-version.log 2>&1
 head -n 1 .build/iverilog-version.log
 cat .build/verilator-version.log
 
-# Test the current Markdown template itself, rather than maintaining a copy.
-awk '/^```systemverilog$/ { inside=1; code=""; next }
-     /^```$/ { if (inside && code ~ /module tb_dut;/) { printf "%s", code; exit }; inside=0 }
-     inside { code=code $0 "\n" }' \
-    ../../testbench-craft/SKILL.md > .build/template.sv
-grep -q '^module tb_dut;' .build/template.sv
-grep -q '^endmodule' .build/template.sv
+template=../../testbench-craft/templates/portable-valid-result.sv
+grep -q '^module tb_dut;' "$template"
+grep -q '^endmodule' "$template"
 
 compile() {
     local sim=$1 name=$2 top=$3 expected_reject=$4
@@ -79,7 +75,7 @@ for sim in iverilog verilator; do
         run_case "$sim" handshake pass 'PASS handshake'
         run_case "$sim" handshake-broken-hold fail 'INPUT_HOLD' +break_hold
     fi
-    if compile "$sim" template tb_dut '' .build/template.sv pipeline_dut.sv; then
+    if compile "$sim" template tb_dut '' "$template" pipeline_dut.sv; then
         run_case "$sim" template pass 'PASS: 3 transactions checked'
         run_case "$sim" template-corrupt fail 'MISMATCH' +corrupt
         run_case "$sim" template-drop fail 'LOCAL TIMEOUT' +drop

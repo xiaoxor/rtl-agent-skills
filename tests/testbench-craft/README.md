@@ -8,7 +8,7 @@ note: [Icarus](../../testbench-craft/simulators/icarus.md),
 [XSIM](../../testbench-craft/simulators/xsim.md), or
 [VCS](../../testbench-craft/simulators/vcs.md). This README is the dated
 evidence.
-These test the described Verilog behavior and the actual Markdown template;
+These test the described Verilog behavior and the actual standalone template;
 they do not test whether an agent consistently follows the skill.
 
 ## Run
@@ -79,7 +79,7 @@ Tested on Windows (**2026-10-15/16**) and Linux (**2026-10-16**):
 | `tb_race.sv` | Current/old: **4/4** | Current/old: **8/0** | Current/old: **9/0**, **1/8** | Current/old: **9/0**, **9/0** | Same-edge blocking stimulus races with DUT sampling. Both source-order variants produced these counts. These observations are not contractual expectations in the runner. |
 | `tb_handshake.sv` | PASS | PASS | PASS | PASS | Eight accepted and eight checked transactions, six stalled input edges, seven simultaneous input/output transfers; reset discards a pending response. |
 | Handshake with `+break_hold` | Expected failure, exit 1 | Expected failure, exit 1 | `Fatal: INPUT_HOLD` | `Fatal: INPUT_HOLD`, exit 0 | Payload corruption during backpressure is detected. |
-| Extracted skill template + `pipeline_dut.sv` | PASS, 3 checked | PASS, 3 checked | PASS, 3 checked | PASS, 3 checked | The unmodified template runs against an identity DUT with the documented N → N+1 registered latency. |
+| `portable-valid-result.sv` + `pipeline_dut.sv` | PASS, 3 checked | PASS, 3 checked | PASS, 3 checked | PASS, 3 checked | The unmodified template runs against an identity DUT with the documented N → N+1 registered latency. |
 | Template with `+corrupt` | Expected failure, exit 1 | Expected failure, exit 1 | `Fatal: MISMATCH` | `Fatal: MISMATCH`, exit 0 | Incorrect output is rejected. |
 | Template with `+drop` | Expected failure, exit 1 | Expected failure, exit 1 | `Fatal: LOCAL TIMEOUT` | `Fatal: LOCAL TIMEOUT`, exit 0 | A lost response produces a bounded timeout, without printing PASS. |
 | `tb_xcheck.sv` | Expected failure, exit 1 (`xx`) | PASS after X becomes zero | `Fatal: UNKNOWN_REJECTED` (`xx`) | `Fatal: UNKNOWN_REJECTED` (`xx`), exit 0 | `!==` rejects an unknown in the four-state XSIM/Icarus/VCS runs; the same check cannot establish absence of X in the default two-state Verilator run. |

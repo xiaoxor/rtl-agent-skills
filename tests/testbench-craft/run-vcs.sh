@@ -15,13 +15,9 @@ done
 vcs -ID > "$buildRoot/version.log" 2>&1
 grep -m1 'Compiler version' "$buildRoot/version.log" | tee -a "$buildRoot/results.txt"
 
-# Test the current Markdown template itself, rather than maintaining a copy.
-awk '/^```systemverilog$/ { inside=1; code=""; next }
-     /^```$/ { if (inside && code ~ /module tb_dut;/) { printf "%s", code; exit }; inside=0 }
-     inside { code=code $0 "\n" }' \
-    ../../testbench-craft/SKILL.md > "$buildRoot/template.sv"
-grep -q '^module tb_dut;' "$buildRoot/template.sv"
-grep -q '^endmodule' "$buildRoot/template.sv"
+template=../../testbench-craft/templates/portable-valid-result.sv
+grep -q '^module tb_dut;' "$template"
+grep -q '^endmodule' "$template"
 
 # Expectations: pass requires exit 0, the PASS marker, and no Fatal.
 # fatal requires the case marker and a "Fatal:" line, and must not print PASS.
@@ -78,11 +74,11 @@ run_case scheduling pass 'PASS scheduling' tb_scheduling '' tb_scheduling.sv
 run_case handshake pass 'PASS handshake' tb_handshake '' tb_handshake.sv
 run_case handshake-broken-hold fatal 'INPUT_HOLD:' tb_handshake '+break_hold' tb_handshake.sv
 run_case template pass 'PASS: 3 transactions checked' tb_dut '' \
-    "$buildRoot/template.sv" pipeline_dut.sv
+    "$template" pipeline_dut.sv
 run_case template-corrupt fatal 'MISMATCH:' tb_dut '+corrupt' \
-    "$buildRoot/template.sv" pipeline_dut.sv
+    "$template" pipeline_dut.sv
 run_case template-drop fatal 'LOCAL TIMEOUT:' tb_dut '+drop' \
-    "$buildRoot/template.sv" pipeline_dut.sv
+    "$template" pipeline_dut.sv
 run_case race pass 'OBSERVE race' tb_race '' tb_race.sv
 run_case nba-initial pass 'PASS initial NBA' tb_nba_initial '' tb_nba_initial.sv
 run_case zero-delay pass 'PASS zero delay' tb_zero_delay '' tb_zero_delay.sv
