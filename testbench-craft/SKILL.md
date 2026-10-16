@@ -35,7 +35,7 @@ user-invocable: true
 - A testbench must **not** drive a synchronous DUT input using a blocking assignment (`=`) in an `@(posedge clk)` process if the DUT also samples that signal at that same edge. The scheduling order is unspecified: this creates a race.
 - For ordinary procedural testbenches driving inputs **on the DUT sampling edge**, use nonblocking assignments (`<=`). These update in the NBA region: the DUT sees the **previous** values on that edge and the newly driven values at the **next** sampling edge.
 - Alternatively, drive with blocking assignments on a **non-sampling edge** (e.g. `@(negedge clk)` for a rising-edge DUT). The inputs must remain stable across the intended sampling edge. This is often simplest and most portable for small testbenches.
-- Prefer a SystemVerilog `clocking block` with explicitly documented input/output skews for complex interfaces, when the selected simulator supports it. `input #1step` samples immediately before the clocking event; `output #0` drives in the clocking output region, not before that same sampling edge. An `input #1` or `output #1` is a real-time skew affected by timescale; do not use it casually.
+- Prefer a SystemVerilog `clocking block` with explicitly documented input/output skews for complex interfaces, when the selected simulator supports it (`SIMULATORS.md` records measured per-tool support and first-sample behavior). `input #1step` samples immediately before the clocking event; `output #0` drives in the clocking output region, not before that same sampling edge. An `input #1` or `output #1` is a real-time skew affected by timescale; do not use it casually.
 - Blocking assignments are correct for local procedural calculations, scoreboards, initial setup before any clock sampling, and deliberate off-edge stimulus. Nonblocking assignments are **not** required everywhere in a testbench.
 - Do not drive a signal from multiple testbench processes. For each driven interface signal, give exactly one driver ownership.
 
@@ -93,7 +93,7 @@ data  = payload;
 
 - Every wait for a response, busy clear, ready/ack, or valid output must be bounded: either a **local cycle limit** or an explicit global watchdog. Prefer both for complex designs.
 - Use `$fatal(1, ...)` on mismatch, timeout, protocol violation, or incomplete tests; do not print PASS after an error. Do not rely on `$error` followed by `$finish` to establish a failing process exit across tools.
-- In batch XSIM 2025.2 and in VCS W-2024.09-SP1, `$fatal(1, ...)` printed `Fatal:` and ended simulation but returned process exit code 0 (in XSIM even with `--onerror quit`; VCS `simv` likewise). For automation on these tools, also check the log for a specific failure marker and require a PASS marker only on successful cases; never use the process exit code alone to judge the test.
+- Judge a test by its log, not by the simulator exit code: XSIM and VCS exit 0 even after `$fatal` (measured table in `SIMULATORS.md`). Require the PASS marker on successful runs and the specific failure marker on intentional ones; let the run script own the reported exit code.
 - Never use unbounded `wait(...)`, `forever` polling, or `fork...join_any` without a clearly terminating watchdog and cleanup.
 - Before reporting PASS, ensure at least one intended transaction was checked, all issued transactions were accounted for, expected queues are empty, and no monitors/scoreboards report outstanding failures.
 - Put diagnostic context in failures: clock/cycle, transaction index, input, expected, actual, and handshake state when relevant.

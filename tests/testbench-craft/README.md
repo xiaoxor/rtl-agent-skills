@@ -1,7 +1,10 @@
 # testbench-craft simulation checks
 
 Small executable experiments for the scheduling and checking claims in
-[`testbench-craft/SKILL.md`](../../testbench-craft/SKILL.md).
+[`testbench-craft/SKILL.md`](../../testbench-craft/SKILL.md). The per-tool
+behavior distilled from these runs for agents lives in
+[`testbench-craft/SIMULATORS.md`](../../testbench-craft/SIMULATORS.md); this
+README is the dated evidence.
 These test the described Verilog behavior and the actual Markdown template;
 they do not test whether an agent consistently follows the skill.
 
