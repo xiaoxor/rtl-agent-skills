@@ -70,11 +70,12 @@ data  = payload;
 - Do not use `#0` as a way to wait for NBA: `#0` moves to the Inactive region, which is still before NBA.
 - A carefully chosen small positive sampling delay may be used in a conventional non-clocking-block TB, but must be compatible with `timeunit/timeprecision`, must not cross a later event, and must be explained; it is **not** a universal fix. Prefer a clocking block or clear next-edge sampling where feasible.
 - A `clocking block` with default `input #1step` observes values from before the event, **not** the newly registered values written by NBA at that event. Choose an appropriate observation strategy for the actual interface contract.
-- In the checked Vivado Simulator (XSIM) 2025.2 clocking-block probe, `input #1step` read `xx` at the first rising edge although the source register was initialized to `0`. Check this skew in the selected simulator before relying on it; the falling-edge drive/sample pattern passed in that version.
 - Keep independent stimulus/expected values in TB variables or queues. Never use a changing DUT input as the expected value when a delayed output arrives.
 
 ### C. Reset, initialization, and X handling
 
+- Use explicit procedural initialization for testbench variables: declare them without inline initializers and assign their time-zero values with blocking assignments in the owning `initial begin ... end` process, before stimulus waits or the first active sampling edge.
+- When procedurally initializing `clk` from `X` to `0`, account for a possible time-zero `negedge` in falling-edge-sensitive logic. Confirm that this transition cannot trigger unintended DUT or testbench work in the selected simulator.
 - Initialize driven inputs to safe values **before** the first active sampling edge.
 - Hold reset for enough clock edges for the DUT's documented reset behavior. For rising-edge DUTs, prefer release on `negedge clk` (or an appropriately scheduled clocking-block drive), not `rst_n = 1` directly in an `@(posedge clk)` process.
 - Do not check outputs until reset completion is well-defined. Flush pending expected transactions across reset if the DUT discards in-flight work.
@@ -110,14 +111,14 @@ This illustrative **SystemVerilog** skeleton assumes:
 `timescale 1ns/1ps
 module tb_dut;
     localparam integer MAX_CYCLES = 1000;
-    reg clk = 1'b0;
-    reg rst_n = 1'b0;
-    reg in_valid = 1'b0;
-    reg [7:0] in_data = 8'h00;
+    reg clk;
+    reg rst_n;
+    reg in_valid;
+    reg [7:0] in_data;
     wire out_valid;
     wire [7:0] out_data;
-    integer cycles = 0;
-    integer checked = 0;
+    integer cycles;
+    integer checked;
 
     always #5 clk = ~clk;
 
@@ -174,7 +175,13 @@ module tb_dut;
     endtask
 
     initial begin
-        // All inputs initialized before the first sampling edge.
+        // Initialize signals before the first sampling edge.
+        clk = 1'b0;
+        rst_n = 1'b0;
+        in_valid = 1'b0;
+        in_data = 8'h00;
+        cycles = 0;
+        checked = 0;
         repeat (4) @(posedge clk);
         @(negedge clk);
         rst_n = 1'b1;
