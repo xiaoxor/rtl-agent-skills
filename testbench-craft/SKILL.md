@@ -17,7 +17,7 @@ user-invocable: true
 - Build or review a testbench, not a synthesizable DUT, unless the user explicitly requests a DUT fix. Do not silently change DUT behavior to make a test pass.
 - Prefer **small task-based, self-checking** Verilog/SystemVerilog testbenches. Add driver, monitor, scoreboard, transaction queues, interfaces, assertions, classes, or coverage only when complexity justifies them. Do not impose UVM.
 - Respect the project's existing language level, reset polarity, clock edges, transaction protocol, simulator, file layout, and coding conventions.
-- Aim for Icarus Verilog, Verilator, and XSIM compatibility where possible. Do not silently introduce unsupported features. If plain Verilog is required, avoid SystemVerilog-only constructs.
+- Aim for Icarus Verilog, Verilator, XSIM, and VCS compatibility where possible. Do not silently introduce unsupported features. If plain Verilog is required, avoid SystemVerilog-only constructs.
 
 ## Workflow
 
@@ -93,7 +93,7 @@ data  = payload;
 
 - Every wait for a response, busy clear, ready/ack, or valid output must be bounded: either a **local cycle limit** or an explicit global watchdog. Prefer both for complex designs.
 - Use `$fatal(1, ...)` on mismatch, timeout, protocol violation, or incomplete tests; do not print PASS after an error. Do not rely on `$error` followed by `$finish` to establish a failing process exit across tools.
-- In batch XSIM 2025.2, `$fatal(1, ...)` printed `Fatal:` and ended simulation but returned process exit code 0, even with `--onerror quit`. For XSIM automation, also check the log for a specific failure marker and require a PASS marker only on successful cases; never use the process exit code alone to judge the test.
+- In batch XSIM 2025.2 and in VCS W-2024.09-SP1, `$fatal(1, ...)` printed `Fatal:` and ended simulation but returned process exit code 0 (in XSIM even with `--onerror quit`; VCS `simv` likewise). For automation on these tools, also check the log for a specific failure marker and require a PASS marker only on successful cases; never use the process exit code alone to judge the test.
 - Never use unbounded `wait(...)`, `forever` polling, or `fork...join_any` without a clearly terminating watchdog and cleanup.
 - Before reporting PASS, ensure at least one intended transaction was checked, all issued transactions were accounted for, expected queues are empty, and no monitors/scoreboards report outstanding failures.
 - Put diagnostic context in failures: clock/cycle, transaction index, input, expected, actual, and handshake state when relevant.
