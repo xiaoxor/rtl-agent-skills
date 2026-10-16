@@ -1,10 +1,10 @@
 `timescale 1ns/1ps
 module tb_scheduling;
-    reg clk = 0;
-    reg [7:0] nba_input = 0, nba_output = 0;
-    reg [7:0] off_input = 0, off_output = 0;
-    reg [7:0] expected_nba = 0, expected_off = 0;
-    reg [7:0] previous_nba = 0, previous_off = 0;
+    reg clk;
+    reg [7:0] nba_input, nba_output;
+    reg [7:0] off_input, off_output;
+    reg [7:0] expected_nba, expected_off;
+    reg [7:0] previous_nba, previous_off;
 
     always #5 clk = ~clk;
     always @(posedge clk) nba_input <= nba_input + 8'd1;
@@ -14,6 +14,15 @@ module tb_scheduling;
     end
 
     initial begin
+        clk = 0;
+        nba_input = 0;
+        nba_output = 0;
+        off_input = 0;
+        off_output = 0;
+        expected_nba = 0;
+        expected_off = 0;
+        previous_nba = 0;
+        previous_off = 0;
         repeat (4) begin
             @(posedge clk);
             if (nba_input !== expected_nba || nba_output !== previous_nba ||

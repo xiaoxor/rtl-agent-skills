@@ -1,7 +1,7 @@
 `timescale 1ns/1ps
 module tb_clocking;
-    reg clk = 0;
-    reg [7:0] data = 0, sampled = 0;
+    reg clk;
+    reg [7:0] data, sampled;
     always #5 clk = ~clk;
     always @(posedge clk) sampled <= data;
     clocking cb @(posedge clk);
@@ -10,6 +10,9 @@ module tb_clocking;
         output data;
     endclocking
     initial begin
+        clk = 0;
+        data = 0;
+        sampled = 0;
         @(cb);
         $display("OBSERVE clocking initial cb.sampled=%h sampled=%h", cb.sampled, sampled);
         if (cb.sampled !== 0) $fatal(1, "CLOCKING_INITIAL");

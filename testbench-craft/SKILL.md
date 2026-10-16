@@ -17,11 +17,15 @@ user-invocable: true
 - Build or review a testbench, not a synthesizable DUT, unless the user explicitly requests a DUT fix. Do not silently change DUT behavior to make a test pass.
 - Prefer **small task-based, self-checking** Verilog/SystemVerilog testbenches. Add driver, monitor, scoreboard, transaction queues, interfaces, assertions, classes, or coverage only when complexity justifies them. Do not impose UVM.
 - Respect the project's existing language level, reset polarity, clock edges, transaction protocol, simulator, file layout, and coding conventions.
-- Aim for Icarus Verilog, Verilator, XSIM, and VCS compatibility where possible. Do not silently introduce unsupported features. If plain Verilog is required, avoid SystemVerilog-only constructs.
+- Use the simulator required by the user or project. Target multiple simulators only when requested or required by the project; do not silently introduce unsupported features. If plain Verilog is required, avoid SystemVerilog-only constructs.
+
+## Simulator notes
+
+Identify the simulator from the user's request or the project's run scripts/configuration before choosing simulator-specific syntax or commands. Read only its matching measured notes: [Icarus Verilog](simulators/icarus.md), [Verilator](simulators/verilator.md), [XSIM](simulators/xsim.md), or [VCS](simulators/vcs.md). For an explicit multi-simulator target, read each target's note. If the simulator cannot be determined and the work depends on tool-specific behavior, ask which simulator the user will run; continue simulator-independent inspection meanwhile.
 
 ## Workflow
 
-1. Inspect the DUT interface and existing testbench. Identify clocks, reset semantics (async/sync, active level), input sampling edges, output update behavior, valid/ready or request/ack protocol, latency, throughput, and backpressure rules. Mark unknown behavior rather than inventing it.
+1. Inspect the DUT interface, existing testbench, and project run configuration. Identify the simulator, clocks, reset semantics (async/sync, active level), input sampling edges, output update behavior, valid/ready or request/ack protocol, latency, throughput, and backpressure rules. Read the matching simulator note above. Mark unknown behavior rather than inventing it.
 2. Make a **cycle contract**: when the testbench drives each input, when the DUT samples it, when a transfer counts, and when outputs may be checked. For variable latency, define the response event instead of guessing a fixed delay.
 3. Pick one coherent drive/sample discipline from below. Avoid mixing conventions without an explicit reason.
 4. Produce a self-checking testbench with directed corner cases, meaningful failures, a finite watchdog, and an unambiguous PASS/FAIL exit.
@@ -35,7 +39,7 @@ user-invocable: true
 - A testbench must **not** drive a synchronous DUT input using a blocking assignment (`=`) in an `@(posedge clk)` process if the DUT also samples that signal at that same edge. The scheduling order is unspecified: this creates a race.
 - For ordinary procedural testbenches driving inputs **on the DUT sampling edge**, use nonblocking assignments (`<=`). These update in the NBA region: the DUT sees the **previous** values on that edge and the newly driven values at the **next** sampling edge.
 - Alternatively, drive with blocking assignments on a **non-sampling edge** (e.g. `@(negedge clk)` for a rising-edge DUT). The inputs must remain stable across the intended sampling edge. This is often simplest and most portable for small testbenches.
-- Prefer a SystemVerilog `clocking block` with explicitly documented input/output skews for complex interfaces, when the selected simulator supports it (`SIMULATORS.md` records measured per-tool support and first-sample behavior). `input #1step` samples immediately before the clocking event; `output #0` drives in the clocking output region, not before that same sampling edge. An `input #1` or `output #1` is a real-time skew affected by timescale; do not use it casually.
+- Prefer a SystemVerilog `clocking block` with explicitly documented input/output skews for complex interfaces, when the selected simulator supports it. `input #1step` samples immediately before the clocking event; `output #0` drives in the clocking output region, not before that same sampling edge. An `input #1` or `output #1` is a real-time skew affected by timescale; do not use it casually.
 - Blocking assignments are correct for local procedural calculations, scoreboards, initial setup before any clock sampling, and deliberate off-edge stimulus. Nonblocking assignments are **not** required everywhere in a testbench.
 - Do not drive a signal from multiple testbench processes. For each driven interface signal, give exactly one driver ownership.
 
@@ -93,7 +97,7 @@ data  = payload;
 
 - Every wait for a response, busy clear, ready/ack, or valid output must be bounded: either a **local cycle limit** or an explicit global watchdog. Prefer both for complex designs.
 - Use `$fatal(1, ...)` on mismatch, timeout, protocol violation, or incomplete tests; do not print PASS after an error. Do not rely on `$error` followed by `$finish` to establish a failing process exit across tools.
-- Judge a test by its log, not by the simulator exit code: XSIM and VCS exit 0 even after `$fatal` (measured table in `SIMULATORS.md`). Require the PASS marker on successful runs and the specific failure marker on intentional ones; let the run script own the reported exit code.
+- Judge a test by its log as well as the simulator exit code. Require a PASS marker on successful runs and the specific failure marker on intentional ones; let the run script own the reported exit code.
 - Never use unbounded `wait(...)`, `forever` polling, or `fork...join_any` without a clearly terminating watchdog and cleanup.
 - Before reporting PASS, ensure at least one intended transaction was checked, all issued transactions were accounted for, expected queues are empty, and no monitors/scoreboards report outstanding failures.
 - Put diagnostic context in failures: clock/cycle, transaction index, input, expected, actual, and handshake state when relevant.

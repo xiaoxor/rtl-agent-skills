@@ -1,7 +1,13 @@
 `timescale 1ns/1ps
 module race_order #(parameter REVERSE = 0)(input wire clk);
-    reg data = 0, sampled = 0;
-    integer current_value = 0, old_value = 0;
+    reg data, sampled;
+    integer current_value, old_value;
+    initial begin
+        data = 0;
+        sampled = 0;
+        current_value = 0;
+        old_value = 0;
+    end
     generate
         if (REVERSE) begin : reverse_order
             always @(posedge clk) sampled <= data;
@@ -21,11 +27,12 @@ module race_order #(parameter REVERSE = 0)(input wire clk);
 endmodule
 
 module tb_race;
-    reg clk = 0;
+    reg clk;
     always #5 clk = ~clk;
     race_order #(.REVERSE(0)) a(clk);
     race_order #(.REVERSE(1)) b(clk);
     initial begin
+        clk = 0;
         #81;
         $display("PASS race probe completed; neither ordering is a portable contract");
         $finish;

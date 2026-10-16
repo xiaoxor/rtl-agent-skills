@@ -1,15 +1,15 @@
 `timescale 1ns/1ps
 module tb_handshake;
-    reg clk = 0, rst_n = 0;
-    reg in_valid = 0, out_ready = 0;
-    reg [7:0] in_data = 0;
+    reg clk, rst_n;
+    reg in_valid, out_ready;
+    reg [7:0] in_data;
     wire in_ready;
-    reg out_valid = 0;
-    reg [7:0] out_data = 0;
-    integer accepted = 0, checked = 0, stalls = 0, simultaneous = 0;
-    integer cycle = 0;
-    reg was_stalled = 0, was_output_stalled = 0;
-    reg [7:0] held_input = 0, held_output = 0;
+    reg out_valid;
+    reg [7:0] out_data;
+    integer accepted, checked, stalls, simultaneous;
+    integer cycle;
+    reg was_stalled, was_output_stalled;
+    reg [7:0] held_input, held_output;
     reg break_hold;
     assign in_ready = !out_valid || out_ready;
     always #5 clk = ~clk;
@@ -56,6 +56,22 @@ module tb_handshake;
     end
 
     initial begin
+        clk = 0;
+        rst_n = 0;
+        in_valid = 0;
+        out_ready = 0;
+        in_data = 0;
+        out_valid = 0;
+        out_data = 0;
+        accepted = 0;
+        checked = 0;
+        stalls = 0;
+        simultaneous = 0;
+        cycle = 0;
+        was_stalled = 0;
+        was_output_stalled = 0;
+        held_input = 0;
+        held_output = 0;
         break_hold = $test$plusargs("break_hold");
         repeat (2) @(negedge clk);
         rst_n = 1;

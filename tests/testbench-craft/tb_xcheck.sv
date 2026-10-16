@@ -1,7 +1,8 @@
 `timescale 1ns/1ps
 module tb_xcheck;
-    reg [7:0] value = 8'hxx;
+    reg [7:0] value;
     initial begin
+        value = 8'hxx;
         #1;
         if (value !== 8'h00)
             $fatal(1, "UNKNOWN_REJECTED: value=%h", value);

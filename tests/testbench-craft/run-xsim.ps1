@@ -34,7 +34,7 @@ $cases = @(
     @{ Name='race'; Top='tb_race'; Files=@('tb_race.sv'); Expect='pass'; Marker='OBSERVE race' },
     @{ Name='nba-initial'; Top='tb_nba_initial'; Files=@('tb_nba_initial.sv'); Expect='pass'; Marker='PASS initial NBA' },
     @{ Name='zero-delay'; Top='tb_zero_delay'; Files=@('tb_zero_delay.sv'); Expect='pass'; Marker='PASS zero delay' },
-    @{ Name='clocking'; Top='tb_clocking'; Files=@('tb_clocking.sv'); Expect='fatal'; Marker='CLOCKING_INITIAL' },
+    @{ Name='clocking'; Top='tb_clocking'; Files=@('tb_clocking.sv'); Expect='pass'; Marker='PASS clocking' },
     @{ Name='xcheck'; Top='tb_xcheck'; Files=@('tb_xcheck.sv'); Expect='fatal'; Marker='UNKNOWN_REJECTED:' }
 )
 

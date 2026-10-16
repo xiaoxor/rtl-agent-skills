@@ -2,9 +2,12 @@
 
 Small executable experiments for the scheduling and checking claims in
 [`testbench-craft/SKILL.md`](../../testbench-craft/SKILL.md). The per-tool
-behavior distilled from these runs for agents lives in
-[`testbench-craft/SIMULATORS.md`](../../testbench-craft/SIMULATORS.md); this
-README is the dated evidence.
+behavior distilled from these runs for agents lives in the matching simulator
+note: [Icarus](../../testbench-craft/simulators/icarus.md),
+[Verilator](../../testbench-craft/simulators/verilator.md),
+[XSIM](../../testbench-craft/simulators/xsim.md), or
+[VCS](../../testbench-craft/simulators/vcs.md). This README is the dated
+evidence.
 These test the described Verilog behavior and the actual Markdown template;
 they do not test whether an agent consistently follows the skill.
 
@@ -61,7 +64,7 @@ Generated sources, executables, and complete logs stay in ignored `.build/`:
 
 ## Measured results
 
-Tested on Windows (**2026-10-15**) and Linux (**2026-10-16**):
+Tested on Windows (**2026-10-15/16**) and Linux (**2026-10-16**):
 
 - Icarus Verilog **13.0 stable** (`v13_0`) and Verilator **5.050**, `2026-07-01 rev vUNKNOWN-built20260702`, from MSYS2 UCRT64.
 - XSIM **2025.2**, `SW Build 6299465`, from the Vivado 2025.2 PowerShell environment.
@@ -72,7 +75,7 @@ Tested on Windows (**2026-10-15**) and Linux (**2026-10-16**):
 | `tb_scheduling.sv` | PASS | PASS | PASS | PASS | An `always` driver using same-edge NBA takes effect after sampling; Active reads see old registers; off-edge blocking drive is stable at sampling. |
 | `tb_nba_initial.sv` | PASS | PASS | PASS | PASS | Same-edge NBA in an `initial` process also retains the old input until NBA in these versions. |
 | `tb_zero_delay.sv` | PASS | PASS | PASS | PASS | `#0` still observes the pre-NBA value; the explicitly bounded `#1` observes the updated register. |
-| `tb_clocking.sv` | Compilation rejected | PASS | `Fatal: CLOCKING_INITIAL` (`cb.sampled=xx`, source=`00`) | PASS (`cb.sampled=00` at the first edge) | Clocking `input #1step` behavior differs in XSIM 2025.2; its check catches the mismatch. VCS follows the documented pre-edge sampling here. |
+| `tb_clocking.sv` | Compilation rejected | PASS | PASS (`cb.sampled=00` at the first edge with procedural initialization) | PASS (`cb.sampled=00` at the first edge) | Icarus rejects clocking-block syntax; the other three pass this probe. |
 | `tb_race.sv` | Current/old: **4/4** | Current/old: **8/0** | Current/old: **9/0**, **1/8** | Current/old: **9/0**, **9/0** | Same-edge blocking stimulus races with DUT sampling. Both source-order variants produced these counts. These observations are not contractual expectations in the runner. |
 | `tb_handshake.sv` | PASS | PASS | PASS | PASS | Eight accepted and eight checked transactions, six stalled input edges, seven simultaneous input/output transfers; reset discards a pending response. |
 | Handshake with `+break_hold` | Expected failure, exit 1 | Expected failure, exit 1 | `Fatal: INPUT_HOLD` | `Fatal: INPUT_HOLD`, exit 0 | Payload corruption during backpressure is detected. |
@@ -113,19 +116,24 @@ recommended drive/sample patterns give consistent checked results. Verilator
 5.050 supports the tested `initial` NBA and `#0` examples, so these should not
 be classified as unsupported based on assumptions about other versions.
 
-Icarus rejects the clocking-block syntax, Verilator and VCS pass the clocking
-probe, and XSIM compiles it but reads `xx` from the `input #1step` clocking
-variable while the source register reads `00`. The skill conditions
-clocking-block use on simulator support; its falling-edge template works in all
-four tools. Fault injection confirms that `$fatal(1, ...)` produces a failing
-process exit in Icarus and Verilator for these examples.
+Icarus rejects the clocking-block syntax; Verilator, XSIM, and VCS pass the
+clocking probe with explicit procedural initialization. A follow-up XSIM 2025.2
+isolation run reproduced `cb.sampled=xx` when `sampled` used a declaration
+initializer, while the source register read `00`; moving only `sampled = 0`
+into an `initial begin` block made it pass, while moving only `clk = 0` did not.
+This suggests a version-specific XSIM clocking-sample issue. The skill
+conditions clocking-block use on simulator support; its falling-edge template
+works in all four tools. Fault injection confirms that `$fatal(1, ...)`
+produces a failing process exit in Icarus and Verilator for these examples.
 
 The same `$fatal` exit-code behavior differs in XSIM 2025.2 and VCS W-2024.09:
 the runtime log contains `Fatal:` but the process exits 0 (in XSIM even with
 `--onerror quit`). Both runners therefore check the fatal message and the
-case-specific marker. The clocking block compiles in XSIM, but its first
-`input #1step` sample is unknown in this probe, so that clocking test stops
-with its identifying Fatal message.
+case-specific marker. The clocking block compiles in XSIM. Keep TB variables
+used by clocking-block sampling procedurally initialized in the owning
+`initial` process; declaration initialization of `sampled` triggered the issue
+described in [`simulators/xsim.md`](../../testbench-craft/simulators/xsim.md)
+in the tested version.
 
 This is a targeted scheduling and template check, not proof of every statement
 or a complete DUT verification environment. It does not cover other tool versions or options, Wishbone, asynchronous reset, multiple clocks, arbitrary

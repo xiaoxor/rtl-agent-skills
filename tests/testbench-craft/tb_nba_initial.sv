@@ -1,10 +1,13 @@
 `timescale 1ns/1ps
 module tb_nba_initial;
-    reg clk = 0;
-    reg data = 0, sampled = 0;
+    reg clk;
+    reg data, sampled;
     always #5 clk = ~clk;
     always @(posedge clk) sampled <= data;
     initial begin
+        clk = 0;
+        data = 0;
+        sampled = 0;
         @(posedge clk);
         data <= 1;
         if (data !== 0)

@@ -1,9 +1,11 @@
 `timescale 1ns/1ps
 module tb_zero_delay;
-    reg clk = 0, sampled = 0;
+    reg clk, sampled;
     always #5 clk = ~clk;
     always @(posedge clk) sampled <= 1;
     initial begin
+        clk = 0;
+        sampled = 0;
         @(posedge clk);
         #0;
         if (sampled !== 0) $fatal(1, "ZERO_DELAY_NOT_PRE_NBA");
