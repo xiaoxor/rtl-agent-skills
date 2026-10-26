@@ -7,7 +7,7 @@ Four focused skills for RTL implementation and review, RTL readability, testbenc
 | Skill | Purpose |
 | --- | --- |
 | `rtl-minimalism` | Implement or modify RTL according to documented interface contracts without defensive hardware for illegal usage, or review RTL for unnecessary defensive logic, redundant hardware, and overengineering. Read-only when reviewing. |
-| `rtl-readability` | Improve or review the structural readability of RTL by organizing code around coherent hardware responsibilities while preserving behavior and timing. Read-only when reviewing. |
+| `rtl-readability` | Improve or review the structural readability of RTL by decomposing modules along hardware functional boundaries and organizing code around coherent hardware responsibilities while preserving behavior and timing. Read-only when reviewing. |
 | `testbench-craft` | Create, review, or repair Verilog/SystemVerilog testbenches with race-free stimulus and sampling, protocol-aware checks, and bounded completion. |
 | `wavedrom-syntax` | Create, edit, and check WaveDrom/WaveJSON timing diagrams, including signal waves, labels, timing alignment, and annotations. |
 
