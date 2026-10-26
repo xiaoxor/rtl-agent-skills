@@ -39,6 +39,13 @@ Prefer verification assertions over synthesized defensive logic. Place assumptio
 
 Minimize hardware complexity, not source-code length.
 
+## Reset Only What Needs Reset
+
+- Reset registers that determine control behavior: FSM state, handshake and valid/ready signals, busy or status flags, and counters used for control decisions.
+- Do not reset pure datapath registers whose value is consumed only when a control signal qualifies it; under legal operation their power-up value is irrelevant.
+- Reset a datapath register anyway when the specification requires a defined initial value, or when the design consumes its output without a qualifying valid signal.
+- Treat reset as hardware: each reset adds routing and a multiplexer, loads the reset tree, and can burden reset-path timing.
+
 ## Preserve Correctness
 
 - Preserve all behavior required by the specification.
@@ -55,6 +62,7 @@ Review only. Do not modify files unless explicitly requested.
 - Look for the patterns above, distinguishing unnecessary defensive logic from required functional logic.
 - Do not treat coding style or source-code length as evidence of hardware inefficiency.
 - Do not assume that fewer registers, states, or pipeline stages always produce better hardware.
+- Do not report missing resets on datapath registers as defects when control logic qualifies their first use; report resets on such registers as simplification candidates.
 
 ### Procedure
 
