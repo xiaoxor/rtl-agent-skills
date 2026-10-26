@@ -2,12 +2,11 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-Five focused skills for RTL implementation, RTL review, RTL readability, testbench verification, and WaveDrom timing diagrams.
+Four focused skills for RTL implementation and review, RTL readability, testbench verification, and WaveDrom timing diagrams.
 
 | Skill | Purpose |
 | --- | --- |
-| `rtl-minimalism` | Implement or modify RTL according to documented interface contracts without adding defensive hardware for illegal usage. |
-| `rtl-overengineering-review` | Review RTL for demonstrably unnecessary defensive logic, redundant hardware, and overengineering. Read-only by default. |
+| `rtl-minimalism` | Implement or modify RTL according to documented interface contracts without defensive hardware for illegal usage, or review RTL for unnecessary defensive logic, redundant hardware, and overengineering. Read-only when reviewing. |
 | `rtl-readability` | Improve or review the structural readability of RTL by organizing code around coherent hardware responsibilities while preserving behavior and timing. Read-only when reviewing. |
 | `testbench-craft` | Create, review, or repair Verilog/SystemVerilog testbenches with race-free stimulus and sampling, protocol-aware checks, and bounded completion. |
 | `wavedrom-syntax` | Create, edit, and check WaveDrom/WaveJSON timing diagrams, including signal waves, labels, timing alignment, and annotations. |
@@ -30,18 +29,18 @@ Install one skill, for example:
 npx skills add xiaoxor/rtl-agent-skills --skill wavedrom-syntax -g
 ```
 
-Or copy the five skill directories to your agent's skills directory, for example `~/.agents/skills/` for Codex or `~/.claude/skills/` for Claude Code.
+Or copy the four skill directories to your agent's skills directory, for example `~/.agents/skills/` for Codex or `~/.claude/skills/` for Claude Code.
 
 ## Explicit invocation
 
-| Agent | RTL implementation | RTL review | RTL readability | Testbench creation/review | WaveDrom diagrams |
-| --- | --- | --- | --- | --- | --- |
-| Codex | `$rtl-minimalism` | `$rtl-overengineering-review` | `$rtl-readability` | `$testbench-craft` | `$wavedrom-syntax` |
-| Claude Code | `/rtl-minimalism` | `/rtl-overengineering-review` | `/rtl-readability` | `/testbench-craft` | `/wavedrom-syntax` |
+| Agent | RTL implementation/review | RTL readability | Testbench creation/review | WaveDrom diagrams |
+| --- | --- | --- | --- | --- |
+| Codex | `$rtl-minimalism` | `$rtl-readability` | `$testbench-craft` | `$wavedrom-syntax` |
+| Claude Code | `/rtl-minimalism` | `/rtl-readability` | `/testbench-craft` | `/wavedrom-syntax` |
 
 Invocation settings:
 
-- Codex: `rtl-minimalism`, `rtl-overengineering-review`, `rtl-readability`, and `testbench-craft` set `policy.allow_implicit_invocation: false` in `agents/openai.yaml`. `wavedrom-syntax` does not yet include this Codex-specific setting.
+- Codex: `rtl-minimalism`, `rtl-readability`, and `testbench-craft` set `policy.allow_implicit_invocation: false` in `agents/openai.yaml`. `wavedrom-syntax` does not yet include this Codex-specific setting.
 - Claude Code: each `SKILL.md` sets `disable-model-invocation: true`.
 
 Agent behavior varies by product and version. In particular, a reported Codex CLI issue has caused explicit invocation to fail when implicit invocation is disabled; test the behavior in your own version: https://github.com/openai/codex/issues/40600

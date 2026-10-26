@@ -1,12 +1,12 @@
 ---
 name: rtl-minimalism
-description: Write minimal, contract-driven RTL without unnecessary defensive logic or overengineering.
+description: Write minimal, contract-driven RTL without unnecessary defensive logic or overengineering, or review existing RTL for the same. Read-only when reviewing.
 disable-model-invocation: true
 ---
 
 # RTL Minimalism
 
-Write the simplest synthesizable RTL that satisfies the specified functionality and design constraints.
+Write the simplest synthesizable RTL that satisfies the specified functionality and design constraints. When reviewing existing RTL, identify hardware complexity not justified by them.
 
 ## Interface Contract
 
@@ -46,6 +46,39 @@ Minimize hardware complexity, not source-code length.
 - Maintain correct bit widths, signedness, and sequential semantics.
 - Never simplify hardware at the expense of legal-operation correctness.
 - When modifying existing RTL, preserve its documented interface contract.
+
+## Reviewing Existing RTL
+
+Review only. Do not modify files unless explicitly requested.
+
+- Evaluate the RTL under its documented interface contract; assume legal input sequences unless the specification requires handling violations.
+- Look for the patterns above, distinguishing unnecessary defensive logic from required functional logic.
+- Do not treat coding style or source-code length as evidence of hardware inefficiency.
+- Do not assume that fewer registers, states, or pipeline stages always produce better hardware.
+
+### Procedure
+
+1. Identify the documented interface contract and design constraints.
+2. Inspect the relevant RTL and its surrounding modules.
+3. Identify potentially unnecessary hardware.
+4. Determine whether each candidate serves a legal-operation, timing, or implementation requirement.
+5. Report only findings supported by specific evidence.
+6. Describe the simplest safe alternative.
+7. Explain how to verify that legal-operation behavior is preserved.
+
+If requirements are unavailable or ambiguous, mark findings as conditional rather than assuming the logic is unnecessary.
+
+### Review Output
+
+For each finding, report:
+
+- **Location:** File and signal or code region.
+- **Issue:** Unnecessary hardware or overengineering.
+- **Evidence:** Why it is not required under the interface contract.
+- **Recommendation:** Minimal safe simplification.
+- **Confidence:** High, Medium, or Low.
+
+Prioritize findings with clear hardware impact. Do not report subjective style preferences as defects. If no justified simplifications are found, say so.
 
 ## Decision Rule
 
